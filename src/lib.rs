@@ -39,12 +39,17 @@ pub fn near_proximity<I: Iterator<Item=Position>>(mut keywords: Vec<I>) -> Vec<(
         // If the list is empty, break the loop.
         let p = keywords[leftmost.0].next().map(|p| (leftmost.0, p));
 
+        // let q be the position q of second keyword of the interval.
+        let q = current[1];
+
+        let mut leftmost_index = 0;
+
         // If p > r, then the interval [l, r] is minimal and
         // we insert it into the heap according to its size.
         if p.map_or(true, |p| p.1 > rightmost.1) {
-            let mut tmp = current.clone();
-            tmp.sort_unstable_by_key(|(i, _)| *i);
-            let path = tmp.into_iter().map(|(_, p)| p).collect();
+            leftmost_index = current[0].0;
+            current.sort_unstable_by_key(|(i, _)| *i);
+            let path = current.iter().map(|(_, p)| *p).collect();
             let size = rightmost.1 - leftmost.1;
             heap.push((size, path));
         }
@@ -57,10 +62,7 @@ pub fn near_proximity<I: Iterator<Item=Position>>(mut keywords: Vec<I>) -> Vec<(
 
         // Remove the leftmost keyword P in the interval,
         // and pop the same keyword from a list.
-        current[0] = p;
-
-        // let q be the position q of second keyword of the interval.
-        let q = current[1];
+        current[leftmost_index] = p;
 
         if p.1 > rightmost.1 {
             // if [l, r] is minimal, let r = p and l = q.
