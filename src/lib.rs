@@ -1,14 +1,12 @@
 #![cfg_attr(feature = "nightly", feature(test))]
 
-use std::vec::IntoIter;
-
 pub type Size = u32;
 pub type Position = u32;
 
 /// Returns the list of best proximity found for these positions ordered by size.
 ///
 /// Every keyword's positions list must be sorted.
-pub fn near_proximity(mut keywords: Vec<IntoIter<Position>>) -> Vec<(Size, Vec<Position>)> {
+pub fn near_proximity<I: Iterator<Item=Position>>(mut keywords: Vec<I>) -> Vec<(Size, Vec<Position>)> {
     if keywords.len() < 2 {
         match keywords.pop() {
             Some(keywords) => return keywords.map(|p| (0, vec![p])).collect(),
@@ -150,7 +148,8 @@ mod tests {
 
     #[test]
     fn empty() {
-        let paths = near_proximity(vec![]);
+        use std::vec::IntoIter;
+        let paths = near_proximity::<IntoIter<_>>(vec![]);
         assert!(paths.is_empty());
     }
 
