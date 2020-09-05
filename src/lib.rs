@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "nightly", feature(test))]
+
 use std::vec::IntoIter;
 
 pub type Size = u32;
@@ -181,5 +183,31 @@ mod tests {
         assert_eq!(paths.next(), Some((3, vec![6, 3])));
         assert_eq!(paths.next(), Some((3, vec![10, 7])));
         assert_eq!(paths.next(), None);
+    }
+}
+
+#[cfg(all(feature = "nightly", test))]
+mod bench {
+    extern crate test;
+    use super::*;
+
+    #[bench]
+    fn three_keywords(b: &mut test::Bencher) {
+        let hello = vec![0, 4, 8, 12, 16, 20].into_iter();
+        let kind =  vec![13, 23].into_iter();
+        let world = vec![14, 15, 24].into_iter();
+        let keywords = vec![hello, kind, world];
+
+        b.iter(|| test::black_box(near_proximity(keywords.clone())))
+    }
+
+    #[bench]
+    fn three_long_keywords(b: &mut test::Bencher) {
+        let hello = 0..100;
+        let kind =  13..113;
+        let world = 15..115;
+        let keywords = vec![hello, kind, world];
+
+        b.iter(|| test::black_box(near_proximity(keywords.clone())))
     }
 }
