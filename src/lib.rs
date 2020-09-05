@@ -27,21 +27,14 @@ pub fn near_proximity(mut keywords: Vec<IntoIter<Position>>) -> Vec<(Size, Vec<P
     // Sort k elements by their positions.
     current.sort_unstable_by_key(|(_, p)| *p);
 
-    println!("current {:?}", current);
-
     // Find leftmost and rightmost keyword and their positions.
     let mut leftmost = *current.first().unwrap();
     let mut rightmost = *current.last().unwrap();
 
     loop {
-        println!("leftmost {:?}", leftmost);
-        println!("rightmost {:?}", rightmost);
-
         // Find the position p of the next elements of a list of the leftmost keyword.
         // If the list is empty, break the loop.
         let p = keywords[leftmost.0].next().map(|p| (leftmost.0, p));
-
-        println!("p {:?}", p);
 
         // If p > r, then the interval [l, r] is minimal and
         // we insert it into the heap according to its size.
@@ -50,7 +43,6 @@ pub fn near_proximity(mut keywords: Vec<IntoIter<Position>>) -> Vec<(Size, Vec<P
             tmp.sort_unstable_by_key(|(i, _)| *i);
             let path = tmp.into_iter().map(|(_, p)| p).collect();
             let size = rightmost.1 - leftmost.1;
-            println!("Found a new path {:?} of size {}", path, size);
             heap.push((size, path));
         }
 
@@ -60,24 +52,24 @@ pub fn near_proximity(mut keywords: Vec<IntoIter<Position>>) -> Vec<(Size, Vec<P
             None => break,
         };
 
-        let q = current[1];
-
         // Remove the leftmost keyword P in the interval,
         // and pop the same keyword from a list.
-        *current.iter_mut().find(|(i, _)| *i == p.0).unwrap() = p;
-        current.sort_unstable_by_key(|(_, p)| *p);
+        current[0] = p;
 
-        println!("current {:?}", current);
+        // let q be the position q of second keyword of the interval.
+        let q = current[1];
 
-        // if [l, r] is minimal.
         if p.1 > rightmost.1 {
+            // if [l, r] is minimal, let r = p and l = q.
             rightmost = p;
             leftmost = q;
         } else {
+            // Ohterwise, let l = min{p,q}.
             leftmost = if p.1 < q.1 { p } else { q };
         }
 
-        println!();
+        // Then update the interval and order of keywords in the interval.
+        current.sort_unstable_by_key(|(_, p)| *p);
     }
 
     // Sort the list according to the size and the positions.
@@ -135,6 +127,22 @@ mod tests {
         let mut paths = paths.into_iter();
         assert_eq!(paths.next(), Some((2, vec![12, 13, 14])));
         assert_eq!(paths.next(), Some((3, vec![16, 13, 14])));
+        assert_eq!(paths.next(), None);
+    }
+
+    #[test]
+    fn three_keywords_quater() {
+        let hello = vec![0, 4, 8, 12, 16, 20].into_iter();
+        let kind =  vec![13, 23].into_iter();
+        let world = vec![14, 15, 24].into_iter();
+        let keywords = vec![hello, kind, world];
+        let paths = near_proximity(keywords);
+
+        let mut paths = paths.into_iter();
+        assert_eq!(paths.next(), Some((2, vec![12, 13, 14])));
+        assert_eq!(paths.next(), Some((3, vec![16, 13, 14])));
+        assert_eq!(paths.next(), Some((4, vec![20, 23, 24])));
+        assert_eq!(paths.next(), Some((8, vec![16, 23, 15])));
         assert_eq!(paths.next(), None);
     }
 
