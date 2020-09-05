@@ -1,7 +1,10 @@
 #![cfg_attr(feature = "nightly", feature(test))]
 
+use tinyvec::TinyVec;
+
 pub type Size = u32;
 pub type Position = u32;
+pub type TinyVec12<T> = TinyVec<[T; 12]>;
 
 /// Returns the list of best proximity found for these positions ordered by size.
 ///
@@ -16,7 +19,7 @@ pub fn near_proximity<I: Iterator<Item=Position>>(mut keywords: Vec<I>) -> Vec<(
 
     // Pop top elements of each list.
     let mut heap = Vec::new();
-    let mut current = Vec::with_capacity(keywords.len());
+    let mut current = TinyVec12::with_capacity(keywords.len());
     for (i, positions) in keywords.iter_mut().enumerate() {
         match positions.next() {
             Some(p) => current.push((i, p)),
