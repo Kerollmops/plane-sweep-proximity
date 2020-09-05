@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "nightly", feature(test))]
 
+use std::iter::FromIterator;
 use tinyvec::TinyVec;
 
 pub type Size = u32;
@@ -9,14 +10,14 @@ pub type TinyVec12<T> = TinyVec<[T; 12]>;
 /// Returns the list of best proximity found for these positions ordered by size.
 ///
 /// Every keyword's positions list must be sorted.
-pub fn near_proximity<I>(mut keywords: Vec<I>, output: &mut Vec<(Size, Vec<Position>)>)
+pub fn near_proximity<I>(mut keywords: Vec<I>, output: &mut Vec<(Size, TinyVec12<Position>)>)
 where I: Iterator<Item=Position>,
 {
     output.clear();
 
     if keywords.len() < 2 {
         if let Some(keywords) = keywords.pop() {
-            output.extend(keywords.map(|p| (0, vec![p])));
+            output.extend(keywords.map(|p| (0, TinyVec12::from_iter(Some(p)))));
         }
         return
     }
@@ -87,6 +88,7 @@ where I: Iterator<Item=Position>,
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tinyvec::tiny_vec;
 
     #[test]
     fn three_keywords() {
@@ -98,10 +100,10 @@ mod tests {
         near_proximity(keywords, &mut paths);
 
         let mut paths = paths.into_iter();
-        assert_eq!(paths.next(), Some((2, vec![1, 2, 3])));
-        assert_eq!(paths.next(), Some((2, vec![10, 11, 12])));
-        assert_eq!(paths.next(), Some((4, vec![6, 2, 3])));
-        assert_eq!(paths.next(), Some((4, vec![10, 11, 7])));
+        assert_eq!(paths.next(), Some((2, tiny_vec![1, 2, 3])));
+        assert_eq!(paths.next(), Some((2, tiny_vec![10, 11, 12])));
+        assert_eq!(paths.next(), Some((4, tiny_vec![6, 2, 3])));
+        assert_eq!(paths.next(), Some((4, tiny_vec![10, 11, 7])));
         assert_eq!(paths.next(), None);
     }
 
@@ -115,13 +117,13 @@ mod tests {
         near_proximity(keywords, &mut paths);
 
         let mut paths = paths.into_iter();
-        assert_eq!(paths.next(), Some((2, vec![0, 1, 2])));
-        assert_eq!(paths.next(), Some((2, vec![5, 6, 7])));
-        assert_eq!(paths.next(), Some((2, vec![10, 11, 12])));
-        assert_eq!(paths.next(), Some((4, vec![5, 1, 2])));
-        assert_eq!(paths.next(), Some((4, vec![5, 6, 2])));
-        assert_eq!(paths.next(), Some((4, vec![10, 6, 7])));
-        assert_eq!(paths.next(), Some((4, vec![10, 11, 7])));
+        assert_eq!(paths.next(), Some((2, tiny_vec![0, 1, 2])));
+        assert_eq!(paths.next(), Some((2, tiny_vec![5, 6, 7])));
+        assert_eq!(paths.next(), Some((2, tiny_vec![10, 11, 12])));
+        assert_eq!(paths.next(), Some((4, tiny_vec![5, 1, 2])));
+        assert_eq!(paths.next(), Some((4, tiny_vec![5, 6, 2])));
+        assert_eq!(paths.next(), Some((4, tiny_vec![10, 6, 7])));
+        assert_eq!(paths.next(), Some((4, tiny_vec![10, 11, 7])));
         assert_eq!(paths.next(), None);
     }
 
@@ -135,8 +137,8 @@ mod tests {
         near_proximity(keywords, &mut paths);
 
         let mut paths = paths.into_iter();
-        assert_eq!(paths.next(), Some((2, vec![12, 13, 14])));
-        assert_eq!(paths.next(), Some((3, vec![16, 13, 14])));
+        assert_eq!(paths.next(), Some((2, tiny_vec![12, 13, 14])));
+        assert_eq!(paths.next(), Some((3, tiny_vec![16, 13, 14])));
         assert_eq!(paths.next(), None);
     }
 
@@ -150,10 +152,10 @@ mod tests {
         near_proximity(keywords, &mut paths);
 
         let mut paths = paths.into_iter();
-        assert_eq!(paths.next(), Some((2, vec![12, 13, 14])));
-        assert_eq!(paths.next(), Some((3, vec![16, 13, 14])));
-        assert_eq!(paths.next(), Some((4, vec![20, 23, 24])));
-        assert_eq!(paths.next(), Some((8, vec![16, 23, 15])));
+        assert_eq!(paths.next(), Some((2, tiny_vec![12, 13, 14])));
+        assert_eq!(paths.next(), Some((3, tiny_vec![16, 13, 14])));
+        assert_eq!(paths.next(), Some((4, tiny_vec![20, 23, 24])));
+        assert_eq!(paths.next(), Some((8, tiny_vec![16, 23, 15])));
         assert_eq!(paths.next(), None);
     }
 
@@ -173,11 +175,11 @@ mod tests {
         near_proximity(keywords, &mut paths);
 
         let mut paths = paths.into_iter();
-        assert_eq!(paths.next(), Some((0, vec![0])));
-        assert_eq!(paths.next(), Some((0, vec![1])));
-        assert_eq!(paths.next(), Some((0, vec![2])));
-        assert_eq!(paths.next(), Some((0, vec![6])));
-        assert_eq!(paths.next(), Some((0, vec![10])));
+        assert_eq!(paths.next(), Some((0, tiny_vec![0])));
+        assert_eq!(paths.next(), Some((0, tiny_vec![1])));
+        assert_eq!(paths.next(), Some((0, tiny_vec![2])));
+        assert_eq!(paths.next(), Some((0, tiny_vec![6])));
+        assert_eq!(paths.next(), Some((0, tiny_vec![10])));
         assert_eq!(paths.next(), None);
     }
 
@@ -190,11 +192,11 @@ mod tests {
         near_proximity(keywords, &mut paths);
 
         let mut paths = paths.into_iter();
-        assert_eq!(paths.next(), Some((1, vec![1, 2])));
-        assert_eq!(paths.next(), Some((1, vec![6, 7])));
-        assert_eq!(paths.next(), Some((2, vec![10, 12])));
-        assert_eq!(paths.next(), Some((3, vec![6, 3])));
-        assert_eq!(paths.next(), Some((3, vec![10, 7])));
+        assert_eq!(paths.next(), Some((1, tiny_vec![1, 2])));
+        assert_eq!(paths.next(), Some((1, tiny_vec![6, 7])));
+        assert_eq!(paths.next(), Some((2, tiny_vec![10, 12])));
+        assert_eq!(paths.next(), Some((3, tiny_vec![6, 3])));
+        assert_eq!(paths.next(), Some((3, tiny_vec![10, 7])));
         assert_eq!(paths.next(), None);
     }
 }
