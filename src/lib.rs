@@ -10,8 +10,14 @@ pub type TinyVec12<T> = TinyVec<[T; 12]>;
 /// Returns the list of best proximity found for these positions ordered by size.
 ///
 /// Every keyword's positions list must be sorted.
-pub fn near_proximity<I>(mut keywords: Vec<I>, output: &mut Vec<(Size, TinyVec12<Position>)>)
-where I: Iterator<Item=Position>,
+pub fn near_proximity<I, F>(
+    mut keywords: Vec<I>,
+    output: &mut Vec<(Size, TinyVec12<Position>)>,
+    proximity: F,
+)
+where
+    I: Iterator<Item=Position>,
+    F: FnMut(&[Position]) -> u32,
 {
     output.clear();
 
@@ -90,6 +96,12 @@ mod tests {
     use super::*;
     use tinyvec::tiny_vec;
 
+    fn min_max_diff(path: &[Position]) -> u32 {
+        let min = path.iter().min().unwrap();
+        let max = path.iter().max().unwrap();
+        max - min
+    }
+
     #[test]
     fn three_keywords() {
         let hello = vec![0, 1, 6, 10].into_iter();
@@ -97,7 +109,7 @@ mod tests {
         let world = vec![3, 7, 12].into_iter();
         let keywords = vec![hello, kind, world];
         let mut paths = Vec::new();
-        near_proximity(keywords, &mut paths);
+        near_proximity(keywords, &mut paths, min_max_diff);
 
         let mut paths = paths.into_iter();
         assert_eq!(paths.next(), Some((2, tiny_vec![1, 2, 3])));
@@ -114,7 +126,7 @@ mod tests {
         let world = vec![2, 7, 12].into_iter();
         let keywords = vec![hello, kind, world];
         let mut paths = Vec::new();
-        near_proximity(keywords, &mut paths);
+        near_proximity(keywords, &mut paths, min_max_diff);
 
         let mut paths = paths.into_iter();
         assert_eq!(paths.next(), Some((2, tiny_vec![0, 1, 2])));
@@ -134,7 +146,7 @@ mod tests {
         let world = vec![14, 15].into_iter();
         let keywords = vec![hello, kind, world];
         let mut paths = Vec::new();
-        near_proximity(keywords, &mut paths);
+        near_proximity(keywords, &mut paths, min_max_diff);
 
         let mut paths = paths.into_iter();
         assert_eq!(paths.next(), Some((2, tiny_vec![12, 13, 14])));
@@ -149,7 +161,7 @@ mod tests {
         let world = vec![14, 15, 24].into_iter();
         let keywords = vec![hello, kind, world];
         let mut paths = Vec::new();
-        near_proximity(keywords, &mut paths);
+        near_proximity(keywords, &mut paths, min_max_diff);
 
         let mut paths = paths.into_iter();
         assert_eq!(paths.next(), Some((2, tiny_vec![12, 13, 14])));
@@ -163,7 +175,7 @@ mod tests {
     fn empty() {
         use std::vec::IntoIter;
         let mut paths = Vec::new();
-        near_proximity::<IntoIter<_>>(vec![], &mut paths);
+        near_proximity::<IntoIter<_>, _>(vec![], &mut paths, min_max_diff);
         assert!(paths.is_empty());
     }
 
@@ -172,7 +184,7 @@ mod tests {
         let hello = vec![0, 1, 2, 6, 10].into_iter();
         let keywords = vec![hello];
         let mut paths = Vec::new();
-        near_proximity(keywords, &mut paths);
+        near_proximity(keywords, &mut paths, min_max_diff);
 
         let mut paths = paths.into_iter();
         assert_eq!(paths.next(), Some((0, tiny_vec![0])));
@@ -189,7 +201,7 @@ mod tests {
         let world = vec![2, 3, 7, 12].into_iter();
         let keywords = vec![hello, world];
         let mut paths = Vec::new();
-        near_proximity(keywords, &mut paths);
+        near_proximity(keywords, &mut paths, min_max_diff);
 
         let mut paths = paths.into_iter();
         assert_eq!(paths.next(), Some((1, tiny_vec![1, 2])));
@@ -214,7 +226,7 @@ mod bench {
         let keywords = vec![hello, kind, world];
 
         let mut paths = Vec::new();
-        b.iter(|| near_proximity(keywords.clone(), &mut paths))
+        b.iter(|| near_proximity(keywords.clone(), &mut paths, min_max_diff))
     }
 
     #[bench]
@@ -225,6 +237,6 @@ mod bench {
         let keywords = vec![hello, kind, world];
 
         let mut paths = Vec::new();
-        b.iter(|| near_proximity(keywords.clone(), &mut paths))
+        b.iter(|| near_proximity(keywords.clone(), &mut paths, min_max_diff))
     }
 }
